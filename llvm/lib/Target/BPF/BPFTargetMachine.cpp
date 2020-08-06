@@ -36,6 +36,7 @@ extern "C" LLVM_EXTERNAL_VISIBILITY void LLVMInitializeBPFTarget() {
   PassRegistry &PR = *PassRegistry::getPassRegistry();
   initializeBPFAbstractMemberAccessPass(PR);
   initializeBPFPreserveDITypePass(PR);
+  initializeBPFAdjustOptPass(PR);
   initializeBPFMIPeepholePass(PR);
   initializeBPFMIPeepholeTruncElimPass(PR);
 }
@@ -94,8 +95,15 @@ TargetPassConfig *BPFTargetMachine::createPassConfig(PassManagerBase &PM) {
   return new BPFPassConfig(*this, PM);
 }
 
-void BPFPassConfig::addIRPasses() {
+void BPFTargetMachine::adjustPassManager(PassManagerBuilder &Builder) {
+  Builder.addExtension(
+      PassManagerBuilder::EP_ModuleOptimizerEarly,
+      [&](const PassManagerBuilder &, legacy::PassManagerBase &PM) {
+        PM.add(createBPFAdjustOpt());
+      });
+}
 
+void BPFPassConfig::addIRPasses() {
   addPass(createBPFAbstractMemberAccess(&getBPFTargetMachine()));
   addPass(createBPFPreserveDIType());
 
