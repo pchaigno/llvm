@@ -81,6 +81,7 @@
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicsBPF.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/User.h"
@@ -93,6 +94,20 @@
 
 namespace llvm {
 constexpr StringRef BPFCoreSharedInfo::AmaAttr;
+uint32_t BPFCoreSharedInfo::SeqNum;
+
+Instruction *BPFCoreSharedInfo::insertPassThrough(Module *M, BasicBlock *BB,
+                                                  Instruction *Input,
+                                                  Instruction *Before) {
+  Function *Fn = Intrinsic::getDeclaration(
+      M, Intrinsic::bpf_passthrough, {Input->getType(), Input->getType()});
+  Constant *SeqNumVal = ConstantInt::get(Type::getInt32Ty(BB->getContext()),
+                                         BPFCoreSharedInfo::SeqNum++);
+
+  auto *NewInst = CallInst::Create(Fn, {SeqNumVal, Input});
+  BB->getInstList().insert(Before->getIterator(), NewInst);
+  return NewInst;
+}
 } // namespace llvm
 
 using namespace llvm;

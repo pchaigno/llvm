@@ -11,6 +11,10 @@
 
 #include "llvm/ADT/StringRef.h"
 
+class BasicBlock;
+class Instruction;
+class Module;
+
 namespace llvm {
 
 class BPFCoreSharedInfo {
@@ -39,6 +43,14 @@ public:
   static constexpr StringRef AmaAttr = "btf_ama";
   /// The attribute attached to globals representing a type id
   static constexpr StringRef TypeIdAttr = "btf_type_id";
+
+  /// llvm.bpf.passthrough builtin seq number
+  static uint32_t SeqNum;
+
+  /// Insert a bpf passthrough builtin function.
+  static Instruction *insertPassThrough(Module *M, BasicBlock *BB,
+                                        Instruction *Input,
+                                        Instruction *Before);
 };
 
 } // namespace llvm
